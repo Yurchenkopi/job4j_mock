@@ -23,10 +23,9 @@ import static ru.job4j.site.controller.RequestResponseTools.getToken;
 public class IndexController {
     private final CategoriesService categoriesService;
     private final InterviewsService interviewsService;
-
-    private final ProfilesService profilesService;
     private final AuthService authService;
     private final NotificationService notifications;
+    private final ProfilesService profilesService;
 
     @GetMapping({"/", "index"})
     public String getIndexPage(Model model, HttpServletRequest req) throws JsonProcessingException {
