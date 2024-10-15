@@ -92,7 +92,7 @@
                         </tr>
                         </thead>
                         <tbody>
-                        <tr th:each="category: ${categories}" style="cursor: pointer;">
+                        <tr th:each="category, iterStat: ${categories}" style="cursor: pointer;">
                             <td>
                                 <div>
                                     <a class="fw-bold text-dark text-decoration-none"
@@ -108,7 +108,7 @@
                                 </small>
                             </td>
                             <td>
-                                <span class="badge bg-success">Новых: 100</span>
+                                <span class="badge bg-success" th:text="'Новых : ' + ${interviews_count[iterStat.index]}"></span>
                             </td>
                         </tr>
                         </tbody>
