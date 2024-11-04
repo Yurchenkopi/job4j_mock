@@ -7,9 +7,7 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
-import ru.checkdev.notification.telegram.action.Action;
-import ru.checkdev.notification.telegram.action.InfoAction;
-import ru.checkdev.notification.telegram.action.RegAction;
+import ru.checkdev.notification.telegram.action.*;
 import ru.checkdev.notification.telegram.service.TgAuthCallWebClint;
 
 import java.util.List;
@@ -32,8 +30,14 @@ public class TgRun {
     private String username;
     @Value("${tg.token}")
     private String token;
+
+    @Value("${security.oauth2.tokenUri}")
+    private String oauth2Token;
+
     @Value("${server.site.url.login}")
     private String urlSiteAuth;
+
+    private String authToken = "bOwOWue-fTO91zFM8Jz2KSjhBhI";
 
     public TgRun(TgAuthCallWebClint tgAuthCallWebClint) {
         this.tgAuthCallWebClint = tgAuthCallWebClint;
@@ -43,8 +47,10 @@ public class TgRun {
     public void initTg() {
         Map<String, Action> actionMap = Map.of(
                 "/start", new InfoAction(List.of(
-                        "/start", "/new")),
-                "/new", new RegAction(tgAuthCallWebClint, urlSiteAuth)
+                        "/start", "/new", "/check", "/bind", "/unbind")),
+                "/new", new RegAction(tgAuthCallWebClint, urlSiteAuth),
+                "/check", new CheckAction(tgAuthCallWebClint, urlSiteAuth, authToken),
+                "/bind", new BindAction(tgAuthCallWebClint, urlSiteAuth)
         );
         try {
             BotMenu menu = new BotMenu(actionMap, username, token);

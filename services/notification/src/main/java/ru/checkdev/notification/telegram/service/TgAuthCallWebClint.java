@@ -2,6 +2,7 @@ package ru.checkdev.notification.telegram.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -29,10 +30,11 @@ public class TgAuthCallWebClint {
      * @param url URL http
      * @return Mono<Person>
      */
-    public Mono<PersonDTO> doGet(String url) {
+    public Mono<PersonDTO> doGet(String url, String token) {
         return webClient
                 .get()
                 .uri(url)
+                .header("Authorization", "Bearer " + token)
                 .retrieve()
                 .bodyToMono(PersonDTO.class)
                 .doOnError(err -> log.error("API not found: {}", err.getMessage()));
