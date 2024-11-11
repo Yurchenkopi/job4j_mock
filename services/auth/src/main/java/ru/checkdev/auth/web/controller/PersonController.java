@@ -147,4 +147,9 @@ public class PersonController {
         map.put("getTotal", persons.showed());
         return new ResponseEntity<>(map, HttpStatus.OK);
     }
+
+    @GetMapping("/email/{email}")
+    public Profile findCurrent(@PathVariable String email) {
+        return persons.findByEmail(email).get();
+    }
 }

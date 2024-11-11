@@ -12,6 +12,7 @@ import ru.checkdev.auth.service.PersonService;
 
 import javax.servlet.http.HttpServletRequest;
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -28,9 +29,6 @@ public class AuthController {
     private final AuthService authService;
 
     private final PersonService personService;
-
-    @Value("${security.oauth2.tokenUri}")
-    String oauth2url;
 
     @Autowired
     public AuthController(final PersonService persons, final AuthService authService, final PersonService personService)
@@ -106,8 +104,7 @@ public class AuthController {
     }
 
     @PostMapping("/signIn")
-    public Object signIn(HttpServletRequest req,
-                                       @RequestBody Profile profile) {
+    public Object signIn(HttpServletRequest request, @RequestBody Profile profile, @Value("${security.oauth2.tokenUri}") String oauth2url) {
         var isLogin = authService.token(
                 oauth2url,
                 Map.of("username", profile.getEmail(),
@@ -119,10 +116,6 @@ public class AuthController {
                 }
             };
         }
-        log.info(isLogin);
-        req.getSession().setAttribute("Authorization", isLogin);
-        log.info(req.getSession().getAttributeNames().nextElement());
-        log.info(req.getSession().getAttribute("Authorization").toString());
         return new Object() {
             public String getToken() {
                 return isLogin;
@@ -131,20 +124,38 @@ public class AuthController {
     }
 
     @GetMapping("/check")
-    public Profile check(HttpServletRequest req, Principal user) {
-        Optional<Profile> optPerson = Optional.empty();
-        log.info(req.getSession().getAttributeNames().nextElement());
-        String token = req.getSession().getAttribute("Authorization").toString();
-        log.info(token);
-        if (token != null) {
-            optPerson = personService.findByEmail(user.getName());
-            log.info(optPerson.get().toString());
-        }
-        if (optPerson.isEmpty()) {
+    public Profile check(@RequestParam String chatId) {
+        var optionalPerson = personService.findByChatId(chatId);
+        if (optionalPerson.isEmpty()) {
+            log.info("Текущий аккаунт ещё не привязан к сервису нотификации");
             return null;
         }
-        log.info(optPerson.get().toString());
-        return optPerson.get();
+        return optionalPerson.get();
+    }
+
+    @PostMapping("/bind")
+    public Map<String, String> bindAccount(@RequestBody Profile profile) {
+        Map<String, String> map = new HashMap<>();
+        log.info(profile.getChatId());
+        if (!personService.updateChatIdByEmail(profile.getChatId(), profile.getEmail())) {
+            map.put("error", "Ошибка: аккаунт не был привязан. Повторите попытку позднее.");
+        } else {
+            map.put("message", "Аккаунт был успешно привязан к сервису нотификации.");
+        }
+        return map;
+    }
+
+    @PostMapping("/unbind")
+    public Map<String, String> unbindAccount(@RequestBody Profile profile) {
+        Map<String, String> map = new HashMap<>();
+        log.info(profile.getEmail());
+        log.info(profile.getChatId());
+        if (!personService.updateChatIdByEmail(profile.getChatId(), profile.getEmail())) {
+            map.put("error", "Ошибка: аккаунт не был отвязан. Повторите попытку позднее.");
+        } else {
+            map.put("message", "Аккаунт был успешно отвязан от сервиса нотификации.");
+        }
+        return map;
     }
 
 }

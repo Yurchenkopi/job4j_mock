@@ -1,15 +1,7 @@
 package ru.checkdev.notification.telegram.action;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -18,7 +10,6 @@ import ru.checkdev.notification.telegram.config.TgConfig;
 import ru.checkdev.notification.telegram.service.TgAuthCallWebClint;
 
 import java.util.Calendar;
-import java.util.Map;
 
 /**
  * 3. Мидл
@@ -34,7 +25,10 @@ import java.util.Map;
 @Slf4j
 public class BindAction implements Action {
     private static final String ERROR_OBJECT = "error";
+    private static final String MESSAGE_OBJECT= "message";
     private static final String URL_AUTH_SIGN_IN = "/signIn";
+    private static final String URL_AUTH_BIND = "/bind";
+    private static final String URL_AUTH_GET_BY_EMAIL = "/person/email";
     private final TgConfig tgConfig = new TgConfig("tg/", 8);
     private final TgAuthCallWebClint authCallWebClint;
     private final String urlSiteAuth;
@@ -69,46 +63,68 @@ public class BindAction implements Action {
 
         if (!tgConfig.isEmail(email)) {
             text = "Email: " + email + " не корректный." + sl
-                   + "попробуйте снова." + sl
-                   + "/bind";
+                    + "попробуйте снова." + sl
+                    + "/bind";
             return new SendMessage(chatId, text);
         }
         var person = new PersonDTO(null, email, password, true, null,
-                Calendar.getInstance());
+                Calendar.getInstance(), null);
         Object result;
         try {
             result = authCallWebClint.doPost(URL_AUTH_SIGN_IN, person).block();
         } catch (Exception e) {
             log.error("WebClient token error: {}", e.getMessage());
             text = "Сервис не доступен попробуйте позже" + sl
-                   + "/bind";
+                    + "/bind";
             return new SendMessage(chatId, text);
         }
 
-        log.info(result.toString());
-
         var mapObject = tgConfig.getObjectToMap(result);
+
+        log.info(mapObject.toString());
 
         if (mapObject.containsKey(ERROR_OBJECT)) {
             text = "Ошибка аутентификации: " + mapObject.get(ERROR_OBJECT);
             return new SendMessage(chatId, text);
         }
 
- //       try {
- //           System.out.println(mapObject);
- //           ObjectMapper mapper = new ObjectMapper();
- //           JsonNode jsonNode = mapper.readTree((String) result);
- //           ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
- //           var session = attributes.getRequest().getSession();
- //           session.setAttribute("token", jsonNode.get("access_token").asText());
- //       } catch (Exception e) {
- //           throw new RuntimeException("Error parsing JSON response", e);
- //       }
+        String token = mapObject.get("token");
 
-        text = "Аккаунт привязан: " + sl
-               + "Логин: " + email + sl
-               + "Пароль: " + password + sl
-               + urlSiteAuth;
+        PersonDTO currentPersonDTO;
+
+        try {
+            currentPersonDTO = authCallWebClint.doGetWithToken(URL_AUTH_GET_BY_EMAIL, token, email).block();
+        } catch (Exception e) {
+            log.error("WebClient /check error: {}", e.getMessage());
+            text = "Сервис не доступен попробуйте позже" + sl
+                    + "/bind";
+            return new SendMessage(chatId, text);
+        }
+
+        var registeredChatId = currentPersonDTO.getChatId();
+
+        if (registeredChatId == null) {
+            person.setChatId(chatId);
+            var rsl = authCallWebClint.doPost(URL_AUTH_BIND, token, person).block();
+            var mapObj = tgConfig.getObjectToMap(rsl);
+            if (mapObj.containsKey(MESSAGE_OBJECT)) {
+                text = mapObj.get(MESSAGE_OBJECT) + sl
+                        + "Логин: " + email + sl
+                        + "Пароль: " + password + sl
+                        + urlSiteAuth;
+                return new SendMessage(chatId, text);
+            } else {
+                return new SendMessage(chatId, mapObj.get(ERROR_OBJECT));
+            }
+        }
+
+        if (registeredChatId.equals(chatId)) {
+            text = "Аккаунт уже привязан";
+        } else {
+            text = "К введенным учетным данным от сервиса нотификации уже привязан другой аккаунт." + sl
+                    + "Для привязки текущего аккаунта выполните процедуру отвязки через старое устройство.";
+        }
+
         return new SendMessage(chatId, text);
     }
 }

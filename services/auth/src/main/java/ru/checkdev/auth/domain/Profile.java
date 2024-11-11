@@ -3,6 +3,7 @@ package ru.checkdev.auth.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.ToString;
 import org.springframework.security.crypto.password.StandardPasswordEncoder;
 
 import javax.persistence.*;
@@ -14,6 +15,7 @@ import java.util.List;
  * @since 25.09.2016
  */
 @Entity(name = "profile")
+@ToString
 public class Profile {
     @Transient
     private final StandardPasswordEncoder encoding = new StandardPasswordEncoder();
@@ -75,6 +77,8 @@ public class Profile {
     private Calendar updated;
 
     private Calendar created;
+
+    private String chatId;
 
     public Profile() {
     }
@@ -263,6 +267,14 @@ public class Profile {
 
     public void setCreated(Calendar created) {
         this.created = created;
+    }
+
+    public String getChatId() {
+        return chatId;
+    }
+
+    public void setChatId(String chatId) {
+        this.chatId = chatId;
     }
 
     @Override

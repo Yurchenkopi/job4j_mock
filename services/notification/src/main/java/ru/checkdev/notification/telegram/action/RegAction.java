@@ -23,6 +23,7 @@ import java.util.Calendar;
 public class RegAction implements Action {
     private static final String ERROR_OBJECT = "error";
     private static final String URL_AUTH_REGISTRATION = "/registration";
+    private static final String URL_AUTH_CHECK = "/check";
     private final TgConfig tgConfig = new TgConfig("tg/", 8);
     private final TgAuthCallWebClint authCallWebClint;
     private final String urlSiteAuth;
@@ -61,10 +62,23 @@ public class RegAction implements Action {
                    + "/new";
             return new SendMessage(chatId, text);
         }
+        PersonDTO personDto;
+        try {
+            personDto = authCallWebClint.doGet(URL_AUTH_CHECK, "chatId", chatId).block();
+        } catch (Exception e) {
+            log.error("WebClient /check error: {}", e.getMessage());
+            text = "Сервис не доступен попробуйте позже" + sl
+                    + "/bind";
+            return new SendMessage(chatId, text);
+        }
+
+        if (personDto != null) {
+            return new SendMessage(chatId, "Текущий аккаунт уже имеет привязку к сервису нотификации. Попробуйте восстановить пароль от текущей учетной записи /forget или отвяжите аккаунт от учетной записи и создайте новую /unbind");
+        }
 
         var password = tgConfig.getPassword();
         var person = new PersonDTO(userName ,email, password, true, null,
-                Calendar.getInstance());
+                Calendar.getInstance(), null);
         Object result;
         try {
             result = authCallWebClint.doPost(URL_AUTH_REGISTRATION, person).block();

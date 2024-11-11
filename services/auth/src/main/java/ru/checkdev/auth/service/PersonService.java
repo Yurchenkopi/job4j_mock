@@ -310,4 +310,22 @@ public class PersonService {
         emptyNames.addAll(Arrays.asList(extra));
         return emptyNames;
     }
+
+    public Optional<Profile> findByChatId(String chatId) {
+        final Optional<Profile> result;
+        Profile profile = this.persons.findByChatId(chatId);
+        if (profile == null) {
+            result = Optional.empty();
+        } else {
+            result = Optional.of(profile);
+        }
+        return result;
+    }
+
+    public boolean updateChatIdByEmail(String chatId, String email) {
+        return persons.updateChatIdByEmail(chatId, email) > 0;
+
+    }
+
+
 }

@@ -37,8 +37,6 @@ public class TgRun {
     @Value("${server.site.url.login}")
     private String urlSiteAuth;
 
-    private String authToken = "bOwOWue-fTO91zFM8Jz2KSjhBhI";
-
     public TgRun(TgAuthCallWebClint tgAuthCallWebClint) {
         this.tgAuthCallWebClint = tgAuthCallWebClint;
     }
@@ -49,8 +47,9 @@ public class TgRun {
                 "/start", new InfoAction(List.of(
                         "/start", "/new", "/check", "/bind", "/unbind")),
                 "/new", new RegAction(tgAuthCallWebClint, urlSiteAuth),
-                "/check", new CheckAction(tgAuthCallWebClint, urlSiteAuth, authToken),
-                "/bind", new BindAction(tgAuthCallWebClint, urlSiteAuth)
+                "/check", new CheckAction(tgAuthCallWebClint),
+                "/bind", new BindAction(tgAuthCallWebClint, urlSiteAuth),
+                "/unbind", new UnBindAction(tgAuthCallWebClint, urlSiteAuth)
         );
         try {
             BotMenu menu = new BotMenu(actionMap, username, token);

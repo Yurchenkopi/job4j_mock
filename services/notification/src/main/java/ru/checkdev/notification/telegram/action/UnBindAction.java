@@ -23,20 +23,25 @@ import java.util.Calendar;
 
 @AllArgsConstructor
 @Slf4j
-public class CheckAction implements Action {
+public class UnBindAction implements Action {
     private static final String ERROR_OBJECT = "error";
+    private static final String MESSAGE_OBJECT= "message";
     private static final String URL_AUTH_CHECK = "/check";
+    private static final String URL_AUTH_SIGN_IN = "/signIn";
+    private static final String URL_AUTH_UNBIND = "/unbind";
+    private static final String URL_AUTH_GET_BY_EMAIL = "/person/email";
     private final TgConfig tgConfig = new TgConfig("tg/", 8);
     private final TgAuthCallWebClint authCallWebClint;
+    private final String urlSiteAuth;
 
     @Override
     public BotApiMethod<Message> handle(Message message) {
         var chatId = message.getChatId().toString();
         var text = "";
         var sl = System.lineSeparator();
-        PersonDTO result;
+        PersonDTO personDTO;
         try {
-            result = authCallWebClint.doGet(URL_AUTH_CHECK, "chatId", chatId).block();
+            personDTO = authCallWebClint.doGet(URL_AUTH_CHECK, "chatId", chatId).block();
         } catch (Exception e) {
             log.error("WebClient /check error: {}", e.getMessage());
             text = "Сервис не доступен попробуйте позже" + sl
@@ -44,15 +49,19 @@ public class CheckAction implements Action {
             return new SendMessage(chatId, text);
         }
 
-        if (result == null) {
+        if (personDTO == null) {
             return new SendMessage(chatId, "Текущий аккаунт ещё не привязан к сервису нотификации");
         }
 
-        text = "Привязанный аккаунт: " + sl
-                + "Логин: " + result.getUsername() + sl
-                + "Email: " + result.getEmail();
-
-        return new SendMessage(chatId, text);
+        personDTO.setChatId(null);
+        var rsl = authCallWebClint.doPost(URL_AUTH_UNBIND, personDTO).block();
+        var mapObj = tgConfig.getObjectToMap(rsl);
+        if (mapObj.containsKey(MESSAGE_OBJECT)) {
+            text = "Аккаунт отвязан";
+            return new SendMessage(chatId, text);
+        } else {
+            return new SendMessage(chatId, mapObj.get(ERROR_OBJECT));
+        }
     }
 
     /**
