@@ -2,7 +2,6 @@ package ru.checkdev.notification.telegram.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -40,6 +39,15 @@ public class TgAuthCallWebClint {
                 .doOnError(err -> log.error("API not found: {}", err.getMessage()));
     }
 
+    /**
+     * Метод get
+     *
+     * @param url URL http
+     * @param paramName Name of parameter
+     * @param paramValue Value of parameter
+     * @return Mono<Person>
+     */
+
     public Mono<PersonDTO> doGet(String url, String paramName, String paramValue) {
         return webClient
                 .get()
@@ -51,6 +59,15 @@ public class TgAuthCallWebClint {
                 .bodyToMono(PersonDTO.class)
                 .doOnError(err -> log.error("API not found: {}", err.getMessage()));
     }
+
+    /**
+     * Метод get
+     *
+     * @param url URL http
+     * @param token access token
+     * @param pathVariable pathVariable parameter
+     * @return Mono<Person>
+     */
 
     public Mono<PersonDTO> doGetWithToken(String url, String token, String pathVariable) {
         return webClient
@@ -81,13 +98,19 @@ public class TgAuthCallWebClint {
                 .doOnError(err -> log.error("API not found: {}", err.getMessage()));
     }
 
+    /**
+     * Метод POST
+     *
+     * @param url       URL http
+     * @param token access token
+     * @param personDTO Body PersonDTO.class
+     * @return Mono<Person>
+     */
     public Mono<Object> doPost(String url, String token, PersonDTO personDTO) {
         return webClient
                 .post()
                 .uri(url)
                 .header("Authorization", "Bearer " + token)
-   //             .header("Content-Type", "application/json")
-   //             .header("Accept", "application/json")
                 .bodyValue(personDTO)
                 .retrieve()
                 .bodyToMono(Object.class)

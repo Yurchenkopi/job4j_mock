@@ -78,7 +78,7 @@ public class Profile {
 
     private Calendar created;
 
-    private String chatId;
+    private Long chatId;
 
     public Profile() {
     }
@@ -269,11 +269,11 @@ public class Profile {
         this.created = created;
     }
 
-    public String getChatId() {
+    public Long getChatId() {
         return chatId;
     }
 
-    public void setChatId(String chatId) {
+    public void setChatId(Long chatId) {
         this.chatId = chatId;
     }
 

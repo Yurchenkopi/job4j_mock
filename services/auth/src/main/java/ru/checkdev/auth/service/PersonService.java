@@ -311,7 +311,7 @@ public class PersonService {
         return emptyNames;
     }
 
-    public Optional<Profile> findByChatId(String chatId) {
+    public Optional<Profile> findByChatId(Long chatId) {
         final Optional<Profile> result;
         Profile profile = this.persons.findByChatId(chatId);
         if (profile == null) {
@@ -322,7 +322,7 @@ public class PersonService {
         return result;
     }
 
-    public boolean updateChatIdByEmail(String chatId, String email) {
+    public boolean updateChatIdByEmail(Long chatId, String email) {
         return persons.updateChatIdByEmail(chatId, email) > 0;
 
     }

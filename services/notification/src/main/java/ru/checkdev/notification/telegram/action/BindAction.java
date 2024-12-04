@@ -12,13 +12,10 @@ import ru.checkdev.notification.telegram.service.TgAuthCallWebClint;
 import java.util.Calendar;
 
 /**
- * 3. Мидл
- * Класс реализует пункт меню привязки аккаунта к сервису checkDev
- * или другими словами - авторизацию в сервисе CheckDev через пару email/password,
- * полученную через регистрацию средствами телеграмм бота
+ * Класс реализует пункт меню привязки аккаунта телеграмм к сервису checkDev
  *
  * @author Pavel Yurchenko, user Pavel
- * @since 03.11.2024
+ * @since 25.11.2024
  */
 
 @AllArgsConstructor
@@ -80,18 +77,14 @@ public class BindAction implements Action {
         }
 
         var mapObject = tgConfig.getObjectToMap(result);
-
         log.info(mapObject.toString());
-
         if (mapObject.containsKey(ERROR_OBJECT)) {
             text = "Ошибка аутентификации: " + mapObject.get(ERROR_OBJECT);
             return new SendMessage(chatId, text);
         }
 
         String token = mapObject.get("token");
-
         PersonDTO currentPersonDTO;
-
         try {
             currentPersonDTO = authCallWebClint.doGetWithToken(URL_AUTH_GET_BY_EMAIL, token, email).block();
         } catch (Exception e) {
@@ -100,11 +93,9 @@ public class BindAction implements Action {
                     + "/bind";
             return new SendMessage(chatId, text);
         }
-
         var registeredChatId = currentPersonDTO.getChatId();
-
         if (registeredChatId == null) {
-            person.setChatId(chatId);
+            person.setChatId(Long.valueOf(chatId));
             var rsl = authCallWebClint.doPost(URL_AUTH_BIND, token, person).block();
             var mapObj = tgConfig.getObjectToMap(rsl);
             if (mapObj.containsKey(MESSAGE_OBJECT)) {
@@ -117,14 +108,13 @@ public class BindAction implements Action {
                 return new SendMessage(chatId, mapObj.get(ERROR_OBJECT));
             }
         }
-
-        if (registeredChatId.equals(chatId)) {
+        if (registeredChatId.equals(Long.parseLong(chatId))) {
             text = "Аккаунт уже привязан";
         } else {
             text = "К введенным учетным данным от сервиса нотификации уже привязан другой аккаунт." + sl
                     + "Для привязки текущего аккаунта выполните процедуру отвязки через старое устройство.";
         }
-
         return new SendMessage(chatId, text);
     }
+
 }

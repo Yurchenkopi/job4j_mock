@@ -31,8 +31,7 @@ public class AuthController {
     private final PersonService personService;
 
     @Autowired
-    public AuthController(final PersonService persons, final AuthService authService, final PersonService personService)
-    {
+    public AuthController(final PersonService persons, final AuthService authService, final PersonService personService) {
         this.persons = persons;
         this.authService = authService;
         this.personService = personService;
@@ -125,7 +124,7 @@ public class AuthController {
 
     @GetMapping("/check")
     public Profile check(@RequestParam String chatId) {
-        var optionalPerson = personService.findByChatId(chatId);
+        var optionalPerson = personService.findByChatId(Long.parseLong(chatId));
         if (optionalPerson.isEmpty()) {
             log.info("Текущий аккаунт ещё не привязан к сервису нотификации");
             return null;
@@ -136,7 +135,6 @@ public class AuthController {
     @PostMapping("/bind")
     public Map<String, String> bindAccount(@RequestBody Profile profile) {
         Map<String, String> map = new HashMap<>();
-        log.info(profile.getChatId());
         if (!personService.updateChatIdByEmail(profile.getChatId(), profile.getEmail())) {
             map.put("error", "Ошибка: аккаунт не был привязан. Повторите попытку позднее.");
         } else {
@@ -148,8 +146,6 @@ public class AuthController {
     @PostMapping("/unbind")
     public Map<String, String> unbindAccount(@RequestBody Profile profile) {
         Map<String, String> map = new HashMap<>();
-        log.info(profile.getEmail());
-        log.info(profile.getChatId());
         if (!personService.updateChatIdByEmail(profile.getChatId(), profile.getEmail())) {
             map.put("error", "Ошибка: аккаунт не был отвязан. Повторите попытку позднее.");
         } else {

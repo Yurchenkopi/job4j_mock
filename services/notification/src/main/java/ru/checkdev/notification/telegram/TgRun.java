@@ -49,7 +49,7 @@ public class TgRun {
                 "/new", new RegAction(tgAuthCallWebClint, urlSiteAuth),
                 "/check", new CheckAction(tgAuthCallWebClint),
                 "/bind", new BindAction(tgAuthCallWebClint, urlSiteAuth),
-                "/unbind", new UnBindAction(tgAuthCallWebClint, urlSiteAuth)
+                "/unbind", new UnBindAction(tgAuthCallWebClint)
         );
         try {
             BotMenu menu = new BotMenu(actionMap, username, token);

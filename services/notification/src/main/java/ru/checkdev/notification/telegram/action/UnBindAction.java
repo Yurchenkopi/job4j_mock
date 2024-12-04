@@ -9,16 +9,11 @@ import ru.checkdev.notification.domain.PersonDTO;
 import ru.checkdev.notification.telegram.config.TgConfig;
 import ru.checkdev.notification.telegram.service.TgAuthCallWebClint;
 
-import java.util.Calendar;
-
 /**
- * 3. Мидл
- * Класс реализует пункт меню привязки аккаунта к сервису checkDev
- * или другими словами - авторизацию в сервисе CheckDev через пару email/password,
- * полученную через регистрацию средствами телеграмм бота
+ * Класс реализует пункт меню отвязки аккаунта телеграмм от сервиса checkDev
  *
  * @author Pavel Yurchenko, user Pavel
- * @since 03.11.2024
+ * @since 25.11.2024
  */
 
 @AllArgsConstructor
@@ -27,12 +22,9 @@ public class UnBindAction implements Action {
     private static final String ERROR_OBJECT = "error";
     private static final String MESSAGE_OBJECT= "message";
     private static final String URL_AUTH_CHECK = "/check";
-    private static final String URL_AUTH_SIGN_IN = "/signIn";
     private static final String URL_AUTH_UNBIND = "/unbind";
-    private static final String URL_AUTH_GET_BY_EMAIL = "/person/email";
     private final TgConfig tgConfig = new TgConfig("tg/", 8);
     private final TgAuthCallWebClint authCallWebClint;
-    private final String urlSiteAuth;
 
     @Override
     public BotApiMethod<Message> handle(Message message) {
@@ -57,25 +49,12 @@ public class UnBindAction implements Action {
         var rsl = authCallWebClint.doPost(URL_AUTH_UNBIND, personDTO).block();
         var mapObj = tgConfig.getObjectToMap(rsl);
         if (mapObj.containsKey(MESSAGE_OBJECT)) {
-            text = "Аккаунт отвязан";
-            return new SendMessage(chatId, text);
+            return new SendMessage(chatId, mapObj.get(MESSAGE_OBJECT));
         } else {
             return new SendMessage(chatId, mapObj.get(ERROR_OBJECT));
         }
     }
 
-    /**
-     * Метод формирует ответ пользователю.
-     * Весь метод разбит на 4 этапа проверки.
-     * 1. Проверка на соответствие формату Email введенного текста.
-     * 2. Отправка данных в сервис Auth и если сервис не доступен сообщаем
-     * 3. Если сервис доступен, получаем от него ответ и обрабатываем его.
-     * 3.1 ответ при ошибке аутентификации
-     * 3.2 ответ при успешной аутентификации.
-     *
-     * @param message Message
-     * @return BotApiMethod<Message>
-     */
     @Override
     public BotApiMethod<Message> callback(Message message) {
         return handle(message);

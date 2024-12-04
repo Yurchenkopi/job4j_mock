@@ -74,10 +74,10 @@ public interface PersonRepository extends CrudRepository<Profile, Integer> {
     @Query("SELECT new ru.checkdev.auth.dto.ProfileDTO(p.id, p.username, p.experience, p.photo.id, p.updated, p.created) FROM profile p ORDER BY p.created DESC")
     List<ProfileDTO> findProfileOrderByCreatedDesc();
 
-    Profile findByChatId(String chatId);
+    Profile findByChatId(Long chatId);
 
     @Modifying
     @Transactional
     @Query("update profile p set p.chatId = ?1 where p.email = ?2")
-    int updateChatIdByEmail(String chatId, String email);
+    int updateChatIdByEmail(Long chatId, String email);
 }
