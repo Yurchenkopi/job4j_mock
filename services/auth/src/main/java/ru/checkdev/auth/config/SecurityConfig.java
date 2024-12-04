@@ -27,6 +27,8 @@ public class SecurityConfig {
         return (web) -> web.ignoring().antMatchers(
                 "/ping",
                 "/registration",
+                "/signIn",
+                "/check/**",
                 "/forgot",
                 "/auth/activated/**",
                 "/person/by",
@@ -40,7 +42,8 @@ public class SecurityConfig {
                 "/template/ping",
                 "/profiles/**",
                 "/swagger-ui/**",
-                "/v3/**"
+                "/v3/**",
+                "/unbind"
         );
     }
 

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 import ru.checkdev.auth.domain.Profile;
 import ru.checkdev.auth.domain.Photo;
 import ru.checkdev.auth.dto.ProfileDTO;
@@ -72,4 +73,11 @@ public interface PersonRepository extends CrudRepository<Profile, Integer> {
      */
     @Query("SELECT new ru.checkdev.auth.dto.ProfileDTO(p.id, p.username, p.experience, p.photo.id, p.updated, p.created) FROM profile p ORDER BY p.created DESC")
     List<ProfileDTO> findProfileOrderByCreatedDesc();
+
+    Profile findByChatId(Long chatId);
+
+    @Modifying
+    @Transactional
+    @Query("update profile p set p.chatId = ?1 where p.email = ?2")
+    int updateChatIdByEmail(Long chatId, String email);
 }

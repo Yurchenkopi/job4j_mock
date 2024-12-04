@@ -29,10 +29,53 @@ public class TgAuthCallWebClint {
      * @param url URL http
      * @return Mono<Person>
      */
+
     public Mono<PersonDTO> doGet(String url) {
         return webClient
                 .get()
                 .uri(url)
+                .retrieve()
+                .bodyToMono(PersonDTO.class)
+                .doOnError(err -> log.error("API not found: {}", err.getMessage()));
+    }
+
+    /**
+     * Метод get
+     *
+     * @param url URL http
+     * @param paramName Name of parameter
+     * @param paramValue Value of parameter
+     * @return Mono<Person>
+     */
+
+    public Mono<PersonDTO> doGet(String url, String paramName, String paramValue) {
+        return webClient
+                .get()
+                .uri(u -> u
+                        .path(url)
+                        .queryParam(paramName, paramValue)
+                        .build())
+                .retrieve()
+                .bodyToMono(PersonDTO.class)
+                .doOnError(err -> log.error("API not found: {}", err.getMessage()));
+    }
+
+    /**
+     * Метод get
+     *
+     * @param url URL http
+     * @param token access token
+     * @param pathVariable pathVariable parameter
+     * @return Mono<Person>
+     */
+
+    public Mono<PersonDTO> doGetWithToken(String url, String token, String pathVariable) {
+        return webClient
+                .get()
+                .uri(u -> u
+                        .path(url + "/{pathVariable}")
+                        .build(pathVariable))
+                .header("Authorization", "Bearer " + token)
                 .retrieve()
                 .bodyToMono(PersonDTO.class)
                 .doOnError(err -> log.error("API not found: {}", err.getMessage()));
@@ -55,6 +98,24 @@ public class TgAuthCallWebClint {
                 .doOnError(err -> log.error("API not found: {}", err.getMessage()));
     }
 
+    /**
+     * Метод POST
+     *
+     * @param url       URL http
+     * @param token access token
+     * @param personDTO Body PersonDTO.class
+     * @return Mono<Person>
+     */
+    public Mono<Object> doPost(String url, String token, PersonDTO personDTO) {
+        return webClient
+                .post()
+                .uri(url)
+                .header("Authorization", "Bearer " + token)
+                .bodyValue(personDTO)
+                .retrieve()
+                .bodyToMono(Object.class)
+                .doOnError(err -> log.error("API not found: {}", err.getMessage()));
+    }
     public void setWebClient(WebClient webClient) {
         this.webClient = webClient;
     }
