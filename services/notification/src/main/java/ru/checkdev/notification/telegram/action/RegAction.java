@@ -66,18 +66,20 @@ public class RegAction implements Action {
             return new SendMessage(chatId, text);
         }
         PersonDTO personDto;
-        int userId = subscribeTelegramService.findByChatId(Long.parseLong(chatId)).getUserId();
-        try {
-            personDto = authCallWebClint.doGet(String.format("%s/%d", URL_AUTH_CHECK_USER, userId)).block();
-        } catch (Exception e) {
-            log.error("WebClient /check error: {}", e.getMessage());
-            text = "Сервис не доступен попробуйте позже" + sl
-                    + "/bind";
-            return new SendMessage(chatId, text);
-        }
-
-        if (personDto != null) {
-            return new SendMessage(chatId, "Текущий аккаунт уже имеет привязку к сервису нотификации. Попробуйте восстановить пароль от текущей учетной записи /forget или отвяжите аккаунт от учетной записи и создайте новую /unbind");
+        var subscribeTg = subscribeTelegramService.findByChatId(Long.parseLong(chatId));
+        if (subscribeTg.isPresent()) {
+            int userId = subscribeTg.get().getUserId();
+            try {
+                personDto = authCallWebClint.doGet(String.format("%s/%d", URL_AUTH_CHECK_USER, userId)).block();
+            } catch (Exception e) {
+                log.error("WebClient /check error: {}", e.getMessage());
+                text = "Сервис не доступен попробуйте позже" + sl
+                        + "/bind";
+                return new SendMessage(chatId, text);
+            }
+            if (personDto != null) {
+                return new SendMessage(chatId, "Текущий аккаунт уже имеет привязку к сервису нотификации. Попробуйте восстановить пароль от текущей учетной записи /forget или отвяжите аккаунт от учетной записи и создайте новую /unbind");
+            }
         }
 
         var password = tgConfig.getPassword();
@@ -99,6 +101,8 @@ public class RegAction implements Action {
             text = "Ошибка регистрации: " + mapObject.get(ERROR_OBJECT);
             return new SendMessage(chatId, text);
         }
+
+        subscribeTelegramService.save(subscribeTg.get());
 
         text = "Вы зарегистрированы: " + sl
                 + "userName: " + userName + sl

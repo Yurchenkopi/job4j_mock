@@ -18,5 +18,10 @@ public class SubscribeTelegram {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     private int userId;
-    private int chatId;
+    private long chatId;
+
+    public SubscribeTelegram(int userId, long chatId) {
+        this.userId = userId;
+        this.chatId = chatId;
+    }
 }

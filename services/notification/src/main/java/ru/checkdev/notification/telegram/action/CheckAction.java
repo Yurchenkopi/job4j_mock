@@ -34,12 +34,12 @@ public class CheckAction implements Action {
 
         var result = subscribeTelegramService.findByChatId(Long.parseLong(chatId));
 
-        if (result == null) {
+        if (result.isEmpty()) {
             return new SendMessage(chatId, "Текущий аккаунт ещё не привязан к сервису нотификации");
         }
         PersonDTO personDTO;
         try {
-            personDTO = authCallWebClint.doGet(String.format("%s/%d", URL_AUTH_CHECK_USER, result.getUserId())).block();
+            personDTO = authCallWebClint.doGet(String.format("%s/%d", URL_AUTH_CHECK_USER, result.get().getUserId())).block();
         } catch (Exception e) {
             log.error("WebClient /check error: {}", e.getMessage());
             text = "Сервис не доступен попробуйте позже" + sl

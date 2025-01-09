@@ -23,13 +23,11 @@ public class SubscribeTelegramService {
         return repository.save(subscribeTelegram);
     }
 
-    public SubscribeTelegram findByChatId(long chatId) {
-        Optional<SubscribeTelegram> rsl = repository.findByChatId(chatId);
-        return rsl.orElseGet(SubscribeTelegram::new);
+    public Optional<SubscribeTelegram> findByChatId(long chatId) {
+        return repository.findByChatId(chatId);
     }
 
-    public SubscribeTelegram findByUserId(int userId) {
-        Optional<SubscribeTelegram> rsl = repository.findByUserId(userId);
-        return rsl.orElseGet(SubscribeTelegram::new);
+    public Optional<SubscribeTelegram> findByUserId(int userId) {
+        return repository.findByUserId(userId);
     }
 }
