@@ -122,16 +122,17 @@ public class AuthController {
         };
     }
 
-    @GetMapping("/check")
-    public Profile check(@RequestParam String chatId) {
-        var optionalPerson = personService.findByChatId(Long.parseLong(chatId));
-        if (optionalPerson.isEmpty()) {
-            log.info("Текущий аккаунт ещё не привязан к сервису нотификации");
-            return null;
-        }
-        return optionalPerson.get();
-    }
+//    @GetMapping("/check")
+//    public Profile check(@RequestParam String chatId) {
+//        var optionalPerson = personService.findById(Long.parseLong(chatId));
+//        if (optionalPerson.isEmpty()) {
+//            log.info("Текущий аккаунт ещё не привязан к сервису нотификации");
+//            return null;
+//        }
+//        return optionalPerson.get();
+//    }
 
+    /*
     @PostMapping("/bind")
     public Map<String, String> bindAccount(@RequestBody Profile profile) {
         Map<String, String> map = new HashMap<>();
@@ -153,5 +154,7 @@ public class AuthController {
         }
         return map;
     }
+
+     */
 
 }

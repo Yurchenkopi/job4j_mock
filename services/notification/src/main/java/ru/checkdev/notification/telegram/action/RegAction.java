@@ -6,6 +6,8 @@ import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import ru.checkdev.notification.domain.PersonDTO;
+import ru.checkdev.notification.domain.SubscribeTelegram;
+import ru.checkdev.notification.service.SubscribeTelegramService;
 import ru.checkdev.notification.telegram.config.TgConfig;
 import ru.checkdev.notification.telegram.service.TgAuthCallWebClint;
 
@@ -23,9 +25,10 @@ import java.util.Calendar;
 public class RegAction implements Action {
     private static final String ERROR_OBJECT = "error";
     private static final String URL_AUTH_REGISTRATION = "/registration";
-    private static final String URL_AUTH_CHECK = "/check";
+    private static final String URL_AUTH_CHECK_USER = "/profiles";
     private final TgConfig tgConfig = new TgConfig("tg/", 8);
     private final TgAuthCallWebClint authCallWebClint;
+    private final SubscribeTelegramService subscribeTelegramService;
     private final String urlSiteAuth;
 
     @Override
@@ -63,17 +66,20 @@ public class RegAction implements Action {
             return new SendMessage(chatId, text);
         }
         PersonDTO personDto;
-        try {
-            personDto = authCallWebClint.doGet(URL_AUTH_CHECK, "chatId", chatId).block();
-        } catch (Exception e) {
-            log.error("WebClient /check error: {}", e.getMessage());
-            text = "Сервис не доступен попробуйте позже" + sl
-                    + "/bind";
-            return new SendMessage(chatId, text);
-        }
-
-        if (personDto != null) {
-            return new SendMessage(chatId, "Текущий аккаунт уже имеет привязку к сервису нотификации. Попробуйте восстановить пароль от текущей учетной записи /forget или отвяжите аккаунт от учетной записи и создайте новую /unbind");
+        var subscribeTg = subscribeTelegramService.findByChatId(Long.parseLong(chatId));
+        if (subscribeTg.isPresent()) {
+            int userId = subscribeTg.get().getUserId();
+            try {
+                personDto = authCallWebClint.doGet(String.format("%s/%d", URL_AUTH_CHECK_USER, userId)).block();
+            } catch (Exception e) {
+                log.error("WebClient /check error: {}", e.getMessage());
+                text = "Сервис не доступен попробуйте позже" + sl
+                        + "/bind";
+                return new SendMessage(chatId, text);
+            }
+            if (personDto != null) {
+                return new SendMessage(chatId, "Текущий аккаунт уже имеет привязку к сервису нотификации. Попробуйте восстановить пароль от текущей учетной записи /forget или отвяжите аккаунт от учетной записи и создайте новую /unbind");
+            }
         }
 
         var password = tgConfig.getPassword();
@@ -95,6 +101,8 @@ public class RegAction implements Action {
             text = "Ошибка регистрации: " + mapObject.get(ERROR_OBJECT);
             return new SendMessage(chatId, text);
         }
+
+        subscribeTelegramService.save(subscribeTg.get());
 
         text = "Вы зарегистрированы: " + sl
                 + "userName: " + userName + sl
