@@ -6,6 +6,8 @@ import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import ru.checkdev.notification.domain.PersonDTO;
+import ru.checkdev.notification.domain.SubscribeTelegram;
+import ru.checkdev.notification.service.SubscribeTelegramService;
 import ru.checkdev.notification.telegram.config.TgConfig;
 import ru.checkdev.notification.telegram.service.TgAuthCallWebClint;
 
@@ -24,10 +26,10 @@ public class BindAction implements Action {
     private static final String ERROR_OBJECT = "error";
     private static final String MESSAGE_OBJECT= "message";
     private static final String URL_AUTH_SIGN_IN = "/signIn";
-    private static final String URL_AUTH_BIND = "/bind";
     private static final String URL_AUTH_GET_BY_EMAIL = "/person/email";
     private final TgConfig tgConfig = new TgConfig("tg/", 8);
     private final TgAuthCallWebClint authCallWebClint;
+    private final SubscribeTelegramService subscribeTelegramService;
     private final String urlSiteAuth;
 
     @Override
@@ -64,8 +66,8 @@ public class BindAction implements Action {
                     + "/bind";
             return new SendMessage(chatId, text);
         }
-        var person = new PersonDTO(null, email, password, true, null,
-                Calendar.getInstance(), null);
+        var person = new PersonDTO(0, null, email, password, true, null,
+                Calendar.getInstance());
         Object result;
         try {
             result = authCallWebClint.doPost(URL_AUTH_SIGN_IN, person).block();
@@ -84,31 +86,26 @@ public class BindAction implements Action {
         }
 
         String token = mapObject.get("token");
-        PersonDTO currentPersonDTO;
+        PersonDTO personDto;
         try {
-            currentPersonDTO = authCallWebClint.doGetWithToken(URL_AUTH_GET_BY_EMAIL, token, email).block();
+            personDto = authCallWebClint.doGetWithToken(URL_AUTH_GET_BY_EMAIL, token, email).block();
         } catch (Exception e) {
             log.error("WebClient /check error: {}", e.getMessage());
             text = "Сервис не доступен попробуйте позже" + sl
                     + "/bind";
             return new SendMessage(chatId, text);
         }
-        var registeredChatId = currentPersonDTO.getChatId();
-        if (registeredChatId == null) {
-            person.setChatId(Long.valueOf(chatId));
-            var rsl = authCallWebClint.doPost(URL_AUTH_BIND, token, person).block();
-            var mapObj = tgConfig.getObjectToMap(rsl);
-            if (mapObj.containsKey(MESSAGE_OBJECT)) {
-                text = mapObj.get(MESSAGE_OBJECT) + sl
-                        + "Логин: " + email + sl
-                        + "Пароль: " + password + sl
-                        + urlSiteAuth;
-                return new SendMessage(chatId, text);
-            } else {
-                return new SendMessage(chatId, mapObj.get(ERROR_OBJECT));
-            }
+        var registeredUserId = personDto.getId();
+        var registeredSubscribeTg = subscribeTelegramService.findByUserId(registeredUserId);
+        if (registeredSubscribeTg.isEmpty()) {
+            subscribeTelegramService.save(new SubscribeTelegram(registeredUserId, Long.parseLong(chatId)));
+            text = "Аккаунт был успешно привязан к сервису нотификации." + sl
+                    + "Логин: " + email + sl
+                    + "Пароль: " + password + sl
+                    + urlSiteAuth;
+            return new SendMessage(chatId, text);
         }
-        if (registeredChatId.equals(Long.parseLong(chatId))) {
+        if (registeredSubscribeTg.get().getChatId() == Long.parseLong(chatId)) {
             text = "Аккаунт уже привязан";
         } else {
             text = "К введенным учетным данным от сервиса нотификации уже привязан другой аккаунт." + sl

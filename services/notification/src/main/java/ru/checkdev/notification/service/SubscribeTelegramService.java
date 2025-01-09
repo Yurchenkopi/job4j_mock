@@ -3,7 +3,6 @@ package ru.checkdev.notification.service;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.checkdev.notification.domain.SubscribeTelegram;
-import ru.checkdev.notification.domain.SubscribeTopic;
 import ru.checkdev.notification.repository.SubscribeTelegramRepository;
 
 import java.util.List;
@@ -21,6 +20,10 @@ public class SubscribeTelegramService {
 
     public SubscribeTelegram save(SubscribeTelegram subscribeTelegram) {
         return repository.save(subscribeTelegram);
+    }
+
+    public void delete(long chatId) {
+        repository.deleteByChatId(chatId);
     }
 
     public Optional<SubscribeTelegram> findByChatId(long chatId) {

@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
-import ru.checkdev.notification.domain.SubscribeTelegram;
 import ru.checkdev.notification.service.SubscribeTelegramService;
 import ru.checkdev.notification.telegram.action.*;
 import ru.checkdev.notification.telegram.service.TgAuthCallWebClint;
@@ -52,8 +51,8 @@ public class TgRun {
                         "/start", "/new", "/check", "/bind", "/unbind")),
                 "/new", new RegAction(tgAuthCallWebClint, subscribeTelegramService, urlSiteAuth),
                 "/check", new CheckAction(tgAuthCallWebClint, subscribeTelegramService),
-                "/bind", new BindAction(tgAuthCallWebClint, urlSiteAuth),
-                "/unbind", new UnBindAction(tgAuthCallWebClint)
+                "/bind", new BindAction(tgAuthCallWebClint, subscribeTelegramService, urlSiteAuth),
+                "/unbind", new UnBindAction(subscribeTelegramService)
         );
         try {
             BotMenu menu = new BotMenu(actionMap, username, token);

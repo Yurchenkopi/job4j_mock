@@ -6,7 +6,6 @@ import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import ru.checkdev.notification.domain.PersonDTO;
-import ru.checkdev.notification.domain.SubscribeTelegram;
 import ru.checkdev.notification.service.SubscribeTelegramService;
 import ru.checkdev.notification.telegram.config.TgConfig;
 import ru.checkdev.notification.telegram.service.TgAuthCallWebClint;
@@ -83,8 +82,8 @@ public class RegAction implements Action {
         }
 
         var password = tgConfig.getPassword();
-        var person = new PersonDTO(userName, email, password, true, null,
-                Calendar.getInstance(), null);
+        var person = new PersonDTO(0, userName, email, password, true, null,
+                Calendar.getInstance());
         Object result;
         try {
             result = authCallWebClint.doPost(URL_AUTH_REGISTRATION, person).block();
@@ -101,8 +100,6 @@ public class RegAction implements Action {
             text = "Ошибка регистрации: " + mapObject.get(ERROR_OBJECT);
             return new SendMessage(chatId, text);
         }
-
-        subscribeTelegramService.save(subscribeTg.get());
 
         text = "Вы зарегистрированы: " + sl
                 + "userName: " + userName + sl
