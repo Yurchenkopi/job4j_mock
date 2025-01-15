@@ -17,12 +17,12 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PersonDTO {
+    private int id;
     private String username;
     private String email;
     private String password;
     private boolean privacy;
     private List<RoleDTO> roles;
     private Calendar created;
-    private Long chatId;
 
 }

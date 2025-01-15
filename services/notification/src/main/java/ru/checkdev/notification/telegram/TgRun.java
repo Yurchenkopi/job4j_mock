@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
+import ru.checkdev.notification.service.SubscribeTelegramService;
 import ru.checkdev.notification.telegram.action.*;
 import ru.checkdev.notification.telegram.service.TgAuthCallWebClint;
 
@@ -26,6 +27,7 @@ import java.util.Map;
 @Slf4j
 public class TgRun {
     private final TgAuthCallWebClint tgAuthCallWebClint;
+    private final SubscribeTelegramService subscribeTelegramService;
     @Value("${tg.username}")
     private String username;
     @Value("${tg.token}")
@@ -37,8 +39,9 @@ public class TgRun {
     @Value("${server.site.url.login}")
     private String urlSiteAuth;
 
-    public TgRun(TgAuthCallWebClint tgAuthCallWebClint) {
+    public TgRun(TgAuthCallWebClint tgAuthCallWebClint, SubscribeTelegramService subscribeTelegramService) {
         this.tgAuthCallWebClint = tgAuthCallWebClint;
+        this.subscribeTelegramService = subscribeTelegramService;
     }
 
     @Bean
@@ -46,10 +49,10 @@ public class TgRun {
         Map<String, Action> actionMap = Map.of(
                 "/start", new InfoAction(List.of(
                         "/start", "/new", "/check", "/bind", "/unbind")),
-                "/new", new RegAction(tgAuthCallWebClint, urlSiteAuth),
-                "/check", new CheckAction(tgAuthCallWebClint),
-                "/bind", new BindAction(tgAuthCallWebClint, urlSiteAuth),
-                "/unbind", new UnBindAction(tgAuthCallWebClint)
+                "/new", new RegAction(tgAuthCallWebClint, subscribeTelegramService, urlSiteAuth),
+                "/check", new CheckAction(tgAuthCallWebClint, subscribeTelegramService),
+                "/bind", new BindAction(tgAuthCallWebClint, subscribeTelegramService, urlSiteAuth),
+                "/unbind", new UnBindAction(subscribeTelegramService)
         );
         try {
             BotMenu menu = new BotMenu(actionMap, username, token);

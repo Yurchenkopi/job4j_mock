@@ -6,6 +6,7 @@ import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import ru.checkdev.notification.domain.PersonDTO;
+import ru.checkdev.notification.service.SubscribeTelegramService;
 import ru.checkdev.notification.telegram.config.TgConfig;
 import ru.checkdev.notification.telegram.service.TgAuthCallWebClint;
 
@@ -21,8 +22,9 @@ import java.util.Calendar;
 @AllArgsConstructor
 @Slf4j
 public class CheckAction implements Action {
-    private static final String URL_AUTH_CHECK = "/check";
+    private static final String URL_AUTH_CHECK_USER = "/profiles";
     private final TgAuthCallWebClint authCallWebClint;
+    private final SubscribeTelegramService subscribeTelegramService;
 
     @Override
     public BotApiMethod<Message> handle(Message message) {
@@ -30,22 +32,24 @@ public class CheckAction implements Action {
         var text = "";
         var sl = System.lineSeparator();
 
-        PersonDTO result;
+        var result = subscribeTelegramService.findByChatId(Long.parseLong(chatId));
+
+        if (result.isEmpty()) {
+            return new SendMessage(chatId, "Текущий аккаунт ещё не привязан к сервису нотификации");
+        }
+        PersonDTO personDTO;
         try {
-            result = authCallWebClint.doGet(URL_AUTH_CHECK, "chatId", chatId).block();
+            personDTO = authCallWebClint.doGet(String.format("%s/%d", URL_AUTH_CHECK_USER, result.get().getUserId())).block();
         } catch (Exception e) {
             log.error("WebClient /check error: {}", e.getMessage());
             text = "Сервис не доступен попробуйте позже" + sl
                     + "/bind";
             return new SendMessage(chatId, text);
         }
-        if (result == null) {
-            return new SendMessage(chatId, "Текущий аккаунт ещё не привязан к сервису нотификации");
-        }
 
         text = "Привязанный аккаунт: " + sl
-                + "Логин: " + result.getUsername() + sl
-                + "Email: " + result.getEmail();
+                + "Логин: " + personDTO.getUsername() + sl
+                + "Email: " + personDTO.getEmail();
         return new SendMessage(chatId, text);
     }
     @Override

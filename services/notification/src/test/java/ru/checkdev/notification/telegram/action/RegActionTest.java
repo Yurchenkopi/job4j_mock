@@ -9,16 +9,18 @@ import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import reactor.core.publisher.Mono;
 import ru.checkdev.notification.domain.PersonDTO;
+import ru.checkdev.notification.domain.SubscribeTelegram;
+import ru.checkdev.notification.service.SubscribeTelegramService;
 import ru.checkdev.notification.telegram.config.TgConfig;
 import ru.checkdev.notification.telegram.service.TgAuthCallWebClint;
 
 import java.lang.reflect.Field;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -28,6 +30,8 @@ class RegActionTest {
     private RegAction regAction;
     @Mock
     private TgAuthCallWebClint tgAuthCallWebClient;
+    @Mock
+    private SubscribeTelegramService subscribeTelegramService;
     @Mock
     private Message messageMock;
 
@@ -47,7 +51,7 @@ class RegActionTest {
         String expected = "Email: " + email + " не корректный." + sl
                 + "попробуйте снова." + sl
                 + "/new";
-         when(messageMock.getText()).thenReturn(messageText);
+        when(messageMock.getText()).thenReturn(messageText);
         BotApiMethod<Message> rsl = regAction.callback(messageMock);
         assertThat(rsl.toString()).contains(expected);
     }
@@ -57,9 +61,10 @@ class RegActionTest {
         var sl = System.lineSeparator();
         String expected = "Сервис не доступен попробуйте позже" + sl
                 + "/bind";
+        when(subscribeTelegramService.findByChatId(anyLong())).thenReturn(Optional.of(new SubscribeTelegram(5, 5L)));
+        when(tgAuthCallWebClient.doGet(anyString())).thenThrow(new RuntimeException("Service unavailable"));
         when(messageMock.getChatId()).thenReturn(11111L);
         when(messageMock.getText()).thenReturn("username valid-mail@mail.com");
-        when(tgAuthCallWebClient.doGet(anyString(), anyString(), anyString())).thenThrow(new RuntimeException("Service unavailable"));
         BotApiMethod<Message> rsl = regAction.callback(messageMock);
         assertThat(rsl.toString()).contains(expected);
     }
@@ -75,7 +80,7 @@ class RegActionTest {
                 + "userName: " + username + sl
                 + "Логин: " + email + sl
                 + "Пароль: " + password + sl;
-        PersonDTO person = new PersonDTO(username, email, "password", true, null, Calendar.getInstance(), null);
+        PersonDTO person = new PersonDTO(0, username, email, "password", true, null, Calendar.getInstance());
 
         when(messageMock.getChatId()).thenReturn(11111L);
         when(messageMock.getText()).thenReturn(username + " " + email);
@@ -86,7 +91,6 @@ class RegActionTest {
         tgConfigField.setAccessible(true);
         tgConfigField.set(regAction, tgConfig);
 
-        when(tgAuthCallWebClient.doGet(anyString(), anyString(), anyString())).thenReturn(Mono.empty());
         when(tgAuthCallWebClient.doPost(anyString(), any(PersonDTO.class))).thenReturn(Mono.just(person));
         BotApiMethod<Message> rsl = regAction.callback(messageMock);
         assertThat(rsl.toString()).contains(expected);
@@ -97,10 +101,11 @@ class RegActionTest {
         String username = "username";
         String email = "valid-email@mail.com";
         String expected = "Текущий аккаунт уже имеет привязку к сервису нотификации. Попробуйте восстановить пароль от текущей учетной записи /forget или отвяжите аккаунт от учетной записи и создайте новую /unbind";
-        PersonDTO person = new PersonDTO(username, email, "password", true, null, Calendar.getInstance(), null);
+        PersonDTO person = new PersonDTO(0, username, email, "password", true, null, Calendar.getInstance());
         when(messageMock.getChatId()).thenReturn(11111L);
         when(messageMock.getText()).thenReturn(username + " " + email);
-        when(tgAuthCallWebClient.doGet(anyString(), anyString(), anyString())).thenReturn(Mono.just(person));
+        when(subscribeTelegramService.findByChatId(anyLong())).thenReturn(Optional.of(new SubscribeTelegram(5, 5L)));
+        when(tgAuthCallWebClient.doGet(anyString())).thenReturn(Mono.just(person));
         BotApiMethod<Message> rsl = regAction.callback(messageMock);
         assertThat(rsl.toString()).contains(expected);
     }
@@ -112,7 +117,6 @@ class RegActionTest {
         String expected = String.format("Пользователь с почтой %s уже существует.", email);
         when(messageMock.getChatId()).thenReturn(11111L);
         when(messageMock.getText()).thenReturn(username + " " + email);
-        when(tgAuthCallWebClient.doGet(anyString(), anyString(), anyString())).thenReturn(Mono.empty());
         when(tgAuthCallWebClient.doPost(anyString(), any(PersonDTO.class))).thenReturn(Mono.just(new HashMap<String, Object>() {{
             put("error", expected);
         }}));

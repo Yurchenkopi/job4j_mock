@@ -5,9 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
-import ru.checkdev.notification.domain.PersonDTO;
-import ru.checkdev.notification.telegram.config.TgConfig;
-import ru.checkdev.notification.telegram.service.TgAuthCallWebClint;
+import ru.checkdev.notification.service.SubscribeTelegramService;
 
 /**
  * Класс реализует пункт меню отвязки аккаунта телеграмм от сервиса checkDev
@@ -19,40 +17,17 @@ import ru.checkdev.notification.telegram.service.TgAuthCallWebClint;
 @AllArgsConstructor
 @Slf4j
 public class UnBindAction implements Action {
-    private static final String ERROR_OBJECT = "error";
-    private static final String MESSAGE_OBJECT= "message";
-    private static final String URL_AUTH_CHECK = "/check";
-    private static final String URL_AUTH_UNBIND = "/unbind";
-    private final TgConfig tgConfig = new TgConfig("tg/", 8);
-    private final TgAuthCallWebClint authCallWebClint;
+    private final SubscribeTelegramService subscribeTelegramService;
 
     @Override
     public BotApiMethod<Message> handle(Message message) {
         var chatId = message.getChatId().toString();
-        var text = "";
-        var sl = System.lineSeparator();
-        PersonDTO personDTO;
-        try {
-            personDTO = authCallWebClint.doGet(URL_AUTH_CHECK, "chatId", chatId).block();
-        } catch (Exception e) {
-            log.error("WebClient /check error: {}", e.getMessage());
-            text = "Сервис не доступен попробуйте позже" + sl
-                    + "/bind";
-            return new SendMessage(chatId, text);
-        }
-
-        if (personDTO == null) {
+        var subscribeTg = subscribeTelegramService.findByChatId(Long.parseLong(chatId));
+        if (subscribeTg.isEmpty()) {
             return new SendMessage(chatId, "Текущий аккаунт ещё не привязан к сервису нотификации");
         }
-
-        personDTO.setChatId(null);
-        var rsl = authCallWebClint.doPost(URL_AUTH_UNBIND, personDTO).block();
-        var mapObj = tgConfig.getObjectToMap(rsl);
-        if (mapObj.containsKey(MESSAGE_OBJECT)) {
-            return new SendMessage(chatId, mapObj.get(MESSAGE_OBJECT));
-        } else {
-            return new SendMessage(chatId, mapObj.get(ERROR_OBJECT));
-        }
+        subscribeTelegramService.delete(Long.parseLong(chatId));
+        return new SendMessage(chatId, "Аккаунт был успешно отвязан от сервиса нотификации.");
     }
 
     @Override
