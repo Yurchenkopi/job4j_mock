@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet id="04" author="Pavel Yurchenko">
+        <createTable tableName="template">
+            <column autoIncrement="true" name="id" type="int">
+                <constraints unique="true" nullable="false" primaryKey="true"/>
+            </column>
+            <column name="type" type="varchar"/>
+            <column name="subject" type="varchar"/>
+            <column name="body" type="varchar"/>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

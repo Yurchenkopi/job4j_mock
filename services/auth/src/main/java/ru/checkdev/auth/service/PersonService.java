@@ -70,6 +70,7 @@ public class PersonService {
                 result = Optional.of(this.persons.save(profile));
                 Map<String, Object> keys = new HashMap<>();
                 keys.put("key", profile.getKey());
+                keys.put("name", profile.getUsername());
                 this.msg.send(new Notify(profile.getEmail(), keys, Notify.Type.REG.name()));
             }
         } catch (DataIntegrityViolationException e) {
@@ -138,6 +139,7 @@ public class PersonService {
             this.persons.save(find);
             Map<String, Object> keys = new HashMap<>();
             keys.put("password", password);
+            keys.put("name", find.getUsername());
             this.msg.send(new Notify(profile.getEmail(), keys, Notify.Type.FORGOT.name()));
             result = Optional.of(profile);
         }
