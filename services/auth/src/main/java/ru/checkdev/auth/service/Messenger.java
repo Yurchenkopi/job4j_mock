@@ -1,7 +1,7 @@
 package ru.checkdev.auth.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.AllArgsConstructor;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import ru.checkdev.auth.domain.Notify;
 
@@ -14,36 +14,24 @@ import java.util.concurrent.ScheduledExecutorService;
  * @version $Id$
  * @since 0.1
  */
+@AllArgsConstructor
 @Service
 public class Messenger {
+    private final KafkaTemplate<String, Object> kafkaTemplate;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-    private final String urlNotify;
-    private final String access;
-
-    public Messenger(final @Value("${server.notification}") String urlNotify,
-                     final @Value("${access.notification}") String access) {
-        this.urlNotify = urlNotify;
-        this.access = access;
-    }
-
 
     public void send(Notify notify) {
         this.scheduler.execute(new Runnable() {
             @Override
             public void run() {
                 try {
-                    new OAuthCall().doPost(
-                            null,
-                            String.format("%s/template/queue?access=%s", urlNotify, access),
-                            new ObjectMapper().writeValueAsString(notify)
-                    );
+                    kafkaTemplate.send("message_from_auth", notify);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
         });
     }
-
 
     @PreDestroy
     public void close() {

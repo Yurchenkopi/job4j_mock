@@ -11,4 +11,6 @@
     <include file="changelog/004_ddl_create_table_template.xml" relativeToChangelogFile="true"/>
     <include file="changelog/005_ddl_create_table_setting.xml" relativeToChangelogFile="true"/>
     <include file="changelog/006_dml_template_insert.xml" relativeToChangelogFile="true"/>
+    <include file="changelog/007_ddl_alter_table_setting.xml" relativeToChangelogFile="true"/>
+    <include file="changelog/008_dml_setting_insert.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

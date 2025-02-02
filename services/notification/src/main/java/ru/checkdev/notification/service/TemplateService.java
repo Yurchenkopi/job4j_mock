@@ -5,6 +5,7 @@ package ru.checkdev.notification.service;
 
 import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import ru.checkdev.notification.config.MailConfiguration;
 import ru.checkdev.notification.domain.Notify;
@@ -59,11 +60,13 @@ public class TemplateService {
         return true;
     }
 
+    @KafkaListener(topics = "message_from_auth")
     public Notify send(Notify notify) {
         Template template = this.templates.findByType(notify.getTemplate());
         SimpleGenerator generator = new SimpleGenerator();
         String subject = generator.generate(template.getSubject(), notify.getKeys());
         String body = new SimpleGenerator().generate(template.getBody(), notify.getKeys());
+        System.out.printf("%s: %s%s", subject, body, System.lineSeparator());
         new MailConfiguration().send(
                 subject, body, notify.getEmail(),
                 Lists.newArrayList(this.settings.findAll())
