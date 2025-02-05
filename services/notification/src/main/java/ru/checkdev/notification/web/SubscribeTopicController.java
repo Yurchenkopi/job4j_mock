@@ -19,20 +19,4 @@ public class SubscribeTopicController {
         List<Integer> list = service.findTopicByUserId(id);
         return new ResponseEntity<>(list, HttpStatus.OK);
     }
-
-    @PostMapping("/add")
-    public ResponseEntity<SubscribeTopic> toAddSubscribeTopic(
-            @RequestBody SubscribeTopic subscribetopic
-    ) {
-        var created = service.save(subscribetopic);
-        return new ResponseEntity<>(created, HttpStatus.CREATED);
-    }
-
-    @PostMapping("/delete")
-    public ResponseEntity<SubscribeTopic> toDeleteSubscribeTopic(
-            @RequestBody SubscribeTopic subscribeTopic
-    ) {
-        var deleted = service.delete(subscribeTopic);
-        return new ResponseEntity<>(deleted, HttpStatus.OK);
-    }
 }

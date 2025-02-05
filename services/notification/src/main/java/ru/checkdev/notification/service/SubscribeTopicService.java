@@ -1,6 +1,7 @@
 package ru.checkdev.notification.service;
 
 import lombok.AllArgsConstructor;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import ru.checkdev.notification.domain.SubscribeTopic;
 import ru.checkdev.notification.repository.SubscribeTopicRepository;
@@ -16,6 +17,7 @@ public class SubscribeTopicService {
         return repository.findAll();
     }
 
+    @KafkaListener(topics = "addSubscribeTopic")
     public SubscribeTopic save(SubscribeTopic subscribeTopic) {
         return repository.save(subscribeTopic);
     }
@@ -26,6 +28,7 @@ public class SubscribeTopicService {
                 .collect(Collectors.toList());
     }
 
+    @KafkaListener(topics = "deleteSubscribeTopic")
     public SubscribeTopic delete(SubscribeTopic subscribeTopic) {
         SubscribeTopic rsl = repository
                 .findByUserIdAndTopicId(subscribeTopic.getUserId(), subscribeTopic.getTopicId());

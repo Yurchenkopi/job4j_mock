@@ -20,20 +20,4 @@ public class SubscribeCategoriesController {
         List<Integer> list = service.findCategoriesByUserId(id);
         return new ResponseEntity<>(list, HttpStatus.OK);
     }
-
-    @PostMapping("/add")
-    public ResponseEntity<SubscribeCategory> toAddSubscribeCategory(
-            @RequestBody SubscribeCategory subscribeCategory
-    ) {
-        var created = service.save(subscribeCategory);
-        return new ResponseEntity<>(created, HttpStatus.CREATED);
-    }
-
-    @PostMapping("/delete")
-    public ResponseEntity<SubscribeCategory> toDeleteSubscribeCategory(
-            @RequestBody SubscribeCategory subscribeCategory
-    ) {
-        var deleted = service.delete(subscribeCategory);
-        return new ResponseEntity<>(deleted, HttpStatus.OK);
-    }
 }
