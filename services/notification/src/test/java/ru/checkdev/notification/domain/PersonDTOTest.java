@@ -22,7 +22,7 @@ class PersonDTOTest {
                 .setDate(2023, 10, 23)
                 .setTimeOfDay(20, 20, 20)
                 .build();
-        person = new PersonDTO("username", "email", "password", true, roles, created, null);
+        person = new PersonDTO(0, "username", "email", "password", true, roles, created);
     }
 
     @Test

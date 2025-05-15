@@ -24,7 +24,6 @@ import java.util.Calendar;
 @Slf4j
 public class BindAction implements Action {
     private static final String ERROR_OBJECT = "error";
-    private static final String MESSAGE_OBJECT= "message";
     private static final String URL_AUTH_SIGN_IN = "/signIn";
     private static final String URL_AUTH_GET_BY_EMAIL = "/person/email";
     private final TgConfig tgConfig = new TgConfig("tg/", 8);
@@ -41,12 +40,14 @@ public class BindAction implements Action {
 
     /**
      * Метод формирует ответ пользователю.
-     * Весь метод разбит на 4 этапа проверки.
+     * Весь метод разбит на следующие этапы:
      * 1. Проверка на соответствие формату Email введенного текста.
      * 2. Отправка данных в сервис Auth и если сервис не доступен сообщаем
      * 3. Если сервис доступен, получаем от него ответ и обрабатываем его.
      * 3.1 ответ при ошибке аутентификации
      * 3.2 ответ при успешной аутентификации.
+     * 3.2.1. Направляем повторный запрос в Auth и получаем id пользователя по email
+     * 3.2.2. Проверяем, есть ли пользователь с полученным id в системе. Если нет, привязываем аккаунт.
      *
      * @param message Message
      * @return BotApiMethod<Message>
@@ -66,6 +67,7 @@ public class BindAction implements Action {
                     + "/bind";
             return new SendMessage(chatId, text);
         }
+
         var person = new PersonDTO(0, null, email, password, true, null,
                 Calendar.getInstance());
         Object result;
@@ -77,7 +79,6 @@ public class BindAction implements Action {
                     + "/bind";
             return new SendMessage(chatId, text);
         }
-
         var mapObject = tgConfig.getObjectToMap(result);
         log.info(mapObject.toString());
         if (mapObject.containsKey(ERROR_OBJECT)) {
@@ -95,6 +96,7 @@ public class BindAction implements Action {
                     + "/bind";
             return new SendMessage(chatId, text);
         }
+
         var registeredUserId = personDto.getId();
         var registeredSubscribeTg = subscribeTelegramService.findByUserId(registeredUserId);
         if (registeredSubscribeTg.isEmpty()) {

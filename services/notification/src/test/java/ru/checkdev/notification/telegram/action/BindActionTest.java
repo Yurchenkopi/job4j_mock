@@ -1,5 +1,6 @@
 package ru.checkdev.notification.telegram.action;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -9,14 +10,16 @@ import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import reactor.core.publisher.Mono;
 import ru.checkdev.notification.domain.PersonDTO;
+import ru.checkdev.notification.domain.SubscribeTelegram;
+import ru.checkdev.notification.service.SubscribeTelegramService;
 import ru.checkdev.notification.telegram.service.TgAuthCallWebClint;
 
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -26,7 +29,14 @@ class BindActionTest {
     @Mock
     private TgAuthCallWebClint tgAuthCallWebClient;
     @Mock
+    private SubscribeTelegramService subscribeTelegramService;
+    @Mock
     private Message messageMock;
+    private final String urlSiteAuth = "http://localhost:8080/login";
+    @BeforeEach
+    public void setUp() {
+        bindAction = new BindAction(tgAuthCallWebClient, subscribeTelegramService, urlSiteAuth);
+    }
 
     @Test
     public void whenRequestToBindThenSendResponse() {
@@ -53,7 +63,7 @@ class BindActionTest {
     public void whenAuthenticationFailsThenReturnServiceUnavailableMessage() {
         String email = "valid-email@example.com";
         String password = "password";
-        PersonDTO person = new PersonDTO("username", email, password, true, null, Calendar.getInstance(), null);
+        PersonDTO person = new PersonDTO(0, "username", email, password, true, null, Calendar.getInstance());
         String messageText = email + " " + password;
         var sl = System.lineSeparator();
         String expected = "Сервис не доступен попробуйте позже" + sl
@@ -69,11 +79,10 @@ class BindActionTest {
     public void whenAuthenticationSucceedsAndUserNotBoundThenBindUser() {
         String email = "valid-email@example.com";
         String password = "password";
-        PersonDTO person = new PersonDTO("username", email, password, true, null, Calendar.getInstance(), null);
+        PersonDTO person = new PersonDTO(0, "username", email, password, true, null, Calendar.getInstance());
         String messageText = email + " " + password;
-        var urlSiteAuth = "http://localhost:8080/login";
         var sl = System.lineSeparator();
-        String expected = "Аккаунт был успешно привязан к сервису нотификации" + sl
+        String expected = "Аккаунт был успешно привязан к сервису нотификации." + sl
                 + "Логин: " + email + sl
                 + "Пароль: " + password + sl
                 + urlSiteAuth;
@@ -83,9 +92,8 @@ class BindActionTest {
             put("token", "some-token");
         }}));
         when(tgAuthCallWebClient.doGetWithToken(anyString(), anyString(), anyString())).thenReturn(Mono.just(person));
-        when(tgAuthCallWebClient.doPost(anyString(), anyString(), any())).thenReturn(Mono.just(new HashMap<String, Object>() {{
-            put("message", expected);
-        }}));
+        when(subscribeTelegramService.findByUserId(anyInt())).thenReturn(Optional.empty());
+
         BotApiMethod<Message> rsl = bindAction.callback(messageMock);
         assertThat(rsl.toString()).contains(expected);
     }
@@ -95,7 +103,7 @@ class BindActionTest {
         String email = "valid-email@example.com";
         String password = "password";
         Long chatId = 12345L;
-        PersonDTO person = new PersonDTO("username", email, password, true, null, Calendar.getInstance(), chatId);
+        PersonDTO person = new PersonDTO(5, "username", email, password, true, null, Calendar.getInstance());
         String messageText = email + " " + password;
         String expected = "Аккаунт уже привязан";
         when(messageMock.getChatId()).thenReturn(chatId);
@@ -104,6 +112,7 @@ class BindActionTest {
             put("token", "some-token");
         }}));
         when(tgAuthCallWebClient.doGetWithToken(anyString(), anyString(), anyString())).thenReturn(Mono.just(person));
+        when(subscribeTelegramService.findByUserId(anyInt())).thenReturn(Optional.of(new SubscribeTelegram(person.getId(), chatId)));
         BotApiMethod<Message> rsl = bindAction.callback(messageMock);
         assertThat(rsl.toString()).contains(expected);
     }
@@ -114,7 +123,7 @@ class BindActionTest {
         String password = "password";
         Long currentChatId = 12345L;
         Long registeredChatId = 67890L;
-        PersonDTO person = new PersonDTO("username", email, password, true, null, Calendar.getInstance(), registeredChatId);
+        PersonDTO person = new PersonDTO(0, "username", email, password, true, null, Calendar.getInstance());
         String messageText = email + " " + password;
         String sl = System.lineSeparator();
         String expected = "К введенным учетным данным от сервиса нотификации уже привязан другой аккаунт." + sl
@@ -125,7 +134,7 @@ class BindActionTest {
             put("token", "some-token");
         }}));
         when(tgAuthCallWebClient.doGetWithToken(anyString(), anyString(), anyString())).thenReturn(Mono.just(person));
-        BotApiMethod<Message> rsl = bindAction.callback(messageMock);
+        when(subscribeTelegramService.findByUserId(anyInt())).thenReturn(Optional.of(new SubscribeTelegram(person.getId(), registeredChatId)));        BotApiMethod<Message> rsl = bindAction.callback(messageMock);
         assertThat(rsl.toString()).contains(expected);
     }
 }
