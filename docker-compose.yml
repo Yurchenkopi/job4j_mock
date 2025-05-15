@@ -1,0 +1,141 @@
+version: "3.9"
+services:
+
+  auth_db:
+    image: postgres
+    container_name: auth_db
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=cd_auth
+      - PGDATA=/var/lib/postgresql/auth_data
+    volumes:
+      - ./db/shortcut/auth_data:/var/lib/postgresql/auth_data
+    restart: always
+
+  auth:
+    build:
+      context: ./services/auth
+      dockerfile: Dockerfile
+    ports:
+      - "9900:9900"
+    environment:
+    - SPRING_DATASOURCE_URL=jdbc:postgresql://auth_db:5432/cd_auth
+    - SPRING_DATASOURCE_USERNAME=compose-postgres
+    - SPRING_DATASOURCE_PASSWORD=compose-postgres
+    - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+    - SECURITY_OAUTH2_TOKENURI=http://auth:9900/oauth/token
+    - SERVER_AUTH=http://auth:9900
+    - SERVER_NOTIFICATION=http://notification:9920
+    container_name: auth
+    depends_on:
+      - auth_db
+
+  desc_db:
+    image: postgres
+    container_name: desc_db
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=cd_desc
+      - PGDATA=/var/lib/postgresql/desc_data
+    volumes:
+      - ./db/shortcut/desc_data:/var/lib/postgresql/desc_data
+    restart: always
+
+  desc:
+    build:
+      context: ./services/desc
+      dockerfile: Dockerfile
+    ports:
+      - "9902:9902"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://desc_db:5432/cd_desc
+      - SPRING_DATASOURCE_USERNAME=compose-postgres
+      - SPRING_DATASOURCE_PASSWORD=compose-postgres
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+      - SECURITY_OAUTH2_RESOURCE_USERINFOURI=http://auth:9900/user
+      - SERVER_NOTIFICATION=http://notification:9920
+    container_name: desc
+    depends_on:
+      - desc_db
+
+  mock_db:
+    image: postgres
+    container_name: mock_db
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=mock
+      - PGDATA=/var/lib/postgresql/mock_data
+    volumes:
+      - ./db/shortcut/mock_data:/var/lib/postgresql/mock_data
+    restart: always
+
+  mock:
+    build:
+      context: ./services/mock
+      dockerfile: Dockerfile
+    ports:
+      - "9912:9912"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://mock_db:5432/mock
+      - SPRING_DATASOURCE_USERNAME=compose-postgres
+      - SPRING_DATASOURCE_PASSWORD=compose-postgres
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+      - SECURITY_OAUTH2_RESOURCE_USERINFOURI=http://auth:9900/user
+      - SERVER_NOTIFICATION=http://notification:9920
+    container_name: mock
+    depends_on:
+      - mock_db
+
+  notification_db:
+    image: postgres
+    container_name: notification_db
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=cd_notification
+      - PGDATA=/var/lib/postgresql/notification_data
+    volumes:
+      - ./db/shortcut/notification_data:/var/lib/postgresql/notification_data
+    restart: always
+
+  notification:
+    build:
+      context: ./services/notification
+      dockerfile: Dockerfile
+    ports:
+      - "9920:9920"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://notification_db:5432/cd_notification
+      - SPRING_DATASOURCE_USERNAME=compose-postgres
+      - SPRING_DATASOURCE_PASSWORD=compose-postgres
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+      - SECURITY_OAUTH2_RESOURCE_USERINFOURI=http://auth:9900/user
+      - SECURITY_OAUTH2_TOKENURI=http://auth:9900/oauth/token
+      - SERVER_AUTH=http://auth:9900
+      - SERVER_SITE_URL_LOGIN=http://site:8080/login
+    container_name: notification
+    depends_on:
+      - notification_db
+
+  site:
+    build:
+      context: ./services/site
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - SECURITY_OAUTH2_RESOURCE_USERINFOURI=http://auth:9900/user
+      - SECURITY_OAUTH2_TOKENURI=http://auth:9900/oauth/token
+      - SERVER_AUTH=http://auth:9900
+      - SERVER_AUTH_PING=http://auth:9900/ping
+      - SERVER_MOCK=http://mock:9912
+    container_name: site
+    depends_on:
+      - auth
+      - desc
+      - mock
+      - notification
+

@@ -39,9 +39,9 @@ public class ProfileControllerTest {
     private MockMvc mockMvc;
     private ProfileController profileController;
     private final ProfileDTO profileDTO1 = new ProfileDTO(
-            1, "name1", "experience1", 1, null, null);
+            1, "test@test.ru", "name1", "experience1", 1, null, null);
     private final ProfileDTO profileDTO2 = new ProfileDTO(
-            2, "name2", "experience2", 2, null, null);
+            2, "test@test.ru", "name2", "experience2", 2, null, null);
 
 
     @Before
