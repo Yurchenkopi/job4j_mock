@@ -21,9 +21,8 @@ services:
       - "9900:9900"
     environment:
     - SPRING_DATASOURCE_URL=jdbc:postgresql://auth_db:5432/cd_auth
-    - SPRING_DATASOURCE_USERNAME=compose-postgres
-    - SPRING_DATASOURCE_PASSWORD=compose-postgres
-    - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+    - SPRING_DATASOURCE_USERNAME=postgres
+    - SPRING_DATASOURCE_PASSWORD=password
     - SECURITY_OAUTH2_TOKENURI=http://auth:9900/oauth/token
     - SERVER_AUTH=http://auth:9900
     - SERVER_NOTIFICATION=http://notification:9920
@@ -51,10 +50,8 @@ services:
       - "9902:9902"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://desc_db:5432/cd_desc
-      - SPRING_DATASOURCE_USERNAME=compose-postgres
-      - SPRING_DATASOURCE_PASSWORD=compose-postgres
-      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
-      - SECURITY_OAUTH2_RESOURCE_USERINFOURI=http://auth:9900/user
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
       - SERVER_NOTIFICATION=http://notification:9920
     container_name: desc
     depends_on:
@@ -80,10 +77,8 @@ services:
       - "9912:9912"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://mock_db:5432/mock
-      - SPRING_DATASOURCE_USERNAME=compose-postgres
-      - SPRING_DATASOURCE_PASSWORD=compose-postgres
-      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
-      - SECURITY_OAUTH2_RESOURCE_USERINFOURI=http://auth:9900/user
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
       - SERVER_NOTIFICATION=http://notification:9920
     container_name: mock
     depends_on:
@@ -109,10 +104,8 @@ services:
       - "9920:9920"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://notification_db:5432/cd_notification
-      - SPRING_DATASOURCE_USERNAME=compose-postgres
-      - SPRING_DATASOURCE_PASSWORD=compose-postgres
-      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
-      - SECURITY_OAUTH2_RESOURCE_USERINFOURI=http://auth:9900/user
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=password
       - SECURITY_OAUTH2_TOKENURI=http://auth:9900/oauth/token
       - SERVER_AUTH=http://auth:9900
       - SERVER_SITE_URL_LOGIN=http://site:8080/login
@@ -131,7 +124,9 @@ services:
       - SECURITY_OAUTH2_TOKENURI=http://auth:9900/oauth/token
       - SERVER_AUTH=http://auth:9900
       - SERVER_AUTH_PING=http://auth:9900/ping
-      - SERVER_MOCK=http://mock:9912
+      - SERVICE_MOCK=http://mock:9912
+      - SERVICE_DESC=http://desc:9902
+      - SERVICE_NOTIFICATION=http://notification:9920
     container_name: site
     depends_on:
       - auth
