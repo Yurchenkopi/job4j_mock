@@ -64,6 +64,7 @@ public class RegAction implements Action {
                    + "/new";
             return new SendMessage(chatId, text);
         }
+
         PersonDTO personDto;
         var subscribeTg = subscribeTelegramService.findByChatId(Long.parseLong(chatId));
         if (subscribeTg.isPresent()) {

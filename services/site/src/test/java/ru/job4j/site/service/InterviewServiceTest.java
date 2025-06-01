@@ -18,8 +18,10 @@ import static org.mockito.Mockito.when;
  * @version 21.10.2023 23:28
  */
 class InterviewServiceTest {
+    private static final String URL_MOCK = "http://localhost:9912";
+
     private ProfilesService profilesService = mock(ProfilesService.class);
-    private InterviewService interviewService = new InterviewService(profilesService);
+    private InterviewService interviewService = new InterviewService(URL_MOCK, profilesService);
 
     @Test
     void injectedNotNull() {
